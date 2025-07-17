@@ -48,9 +48,17 @@ export const deviceAPI = {
     // 디바이스 대여
     rentDevices: (rentData) => api.post('/devices/rent', rentData),
 
-    // 디바이스 반납 (QA 비밀번호 필요)
+    // 관리자용 디바이스 반납 (QA 비밀번호 필요)
     returnDevice: (id, renterName, password) =>
         api.post(`/devices/return/${id}`, { renterName, password }),
+
+    // 🆕 사용자용 디바이스 반납 (비밀번호 불필요)
+    userReturnDevice: (id, renterName) =>
+        api.post(`/devices/user-return/${id}`, { renterName }),
+
+    // 🆕 사용자별 대여중인 디바이스 조회
+    getUserRentedDevices: (renterName) =>
+        api.get(`/devices/user/${renterName}/rented`),
 };
 
 // 대여 관련 API (관리자용)

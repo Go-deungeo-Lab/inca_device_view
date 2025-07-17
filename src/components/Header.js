@@ -1,3 +1,5 @@
+// src/components/Header.js
+
 import React from 'react';
 
 function Header({
@@ -5,6 +7,7 @@ function Header({
                     selectedCount,
                     onRefresh,
                     onRentClick,
+                    onHistoryClick,
                     isRefreshing = false
                 }) {
     return (
@@ -24,7 +27,7 @@ function Header({
                         <button
                             onClick={onRefresh}
                             disabled={isRefreshing}
-                            className="flex items-center px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors disabled:opacity-50"
+                            className="flex items-center px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors disabled:opacity-50 touch-manipulation"
                         >
                             <span className={`mr-2 ${isRefreshing ? 'animate-spin' : ''}`}>
                                 🔄
@@ -33,9 +36,16 @@ function Header({
                         </button>
 
                         <button
+                            onClick={onHistoryClick}
+                            className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors touch-manipulation"
+                        >
+                            📊 이력 보기
+                        </button>
+
+                        <button
                             onClick={onRentClick}
                             disabled={selectedCount === 0}
-                            className={`flex items-center px-6 py-2 rounded-md font-semibold transition-colors ${
+                            className={`flex items-center px-6 py-2 rounded-md font-semibold transition-colors touch-manipulation ${
                                 selectedCount > 0
                                     ? 'bg-blue-600 text-white hover:bg-blue-700'
                                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
