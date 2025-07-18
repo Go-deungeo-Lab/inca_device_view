@@ -68,13 +68,37 @@ export const userAPI = {
     // 디바이스 대여
     rentDevices: (rentData) => api.post('/devices/rent', rentData),
 
-    // 사용자용 디바이스 반납 (QA 비밀번호 필요)
+    // ✅ 사용자용 디바이스 반납 (이름만 입력하면 OK)
     userReturnDevice: (id, renterName) =>
         api.post(`/devices/user-return/${id}`, { renterName }),
 
     // 사용자별 대여중인 디바이스 조회
     getUserRentedDevices: (renterName) =>
         api.get(`/devices/user/${renterName}/rented`),
+};
+
+// 🔓 대여 이력 API (공개 - 사용자도 조회 가능)
+export const rentalAPI = {
+    // ✅ 모든 대여 기록 조회 (공개)
+    getAllRentals: () => api.get('/rentals'),
+
+    // ✅ 활성 대여 기록 조회 (공개)
+    getActiveRentals: () => api.get('/rentals/active'),
+
+    // ✅ 반납된 대여 기록 조회 (공개)
+    getReturnedRentals: () => api.get('/rentals/returned'),
+
+    // ✅ 대여 통계 조회 (공개)
+    getRentalStats: () => api.get('/rentals/stats'),
+
+    // ✅ 플랫폼별 대여 통계 (공개)
+    getRentalStatsByPlatform: () => api.get('/rentals/stats/platform'),
+
+    // ✅ 특정 사용자의 대여 기록 (공개)
+    getRentalsByUser: (renterName) => api.get(`/rentals/renter/${renterName}`),
+
+    // ✅ 특정 디바이스의 대여 기록 (공개)
+    getRentalsByDevice: (deviceId) => api.get(`/rentals/device/${deviceId}`),
 };
 
 // 🔒 관리자용 API (JWT 토큰 필요)
@@ -97,30 +121,6 @@ export const adminAPI = {
     // 관리자용 디바이스 반납 (JWT + QA 비밀번호 필요)
     returnDevice: (id, returnData) =>
         adminApi.post(`/devices/admin/return/${id}`, returnData),
-};
-
-// 🔒 대여 관련 API (관리자 전용)
-export const rentalAPI = {
-    // 모든 대여 기록 조회
-    getAllRentals: () => adminApi.get('/rentals'),
-
-    // 활성 대여 기록 조회
-    getActiveRentals: () => adminApi.get('/rentals/active'),
-
-    // 반납된 대여 기록 조회
-    getReturnedRentals: () => adminApi.get('/rentals/returned'),
-
-    // 대여 통계 조회
-    getRentalStats: () => adminApi.get('/rentals/stats'),
-
-    // 플랫폼별 대여 통계
-    getRentalStatsByPlatform: () => adminApi.get('/rentals/stats/platform'),
-
-    // 특정 사용자의 대여 기록
-    getRentalsByUser: (renterName) => adminApi.get(`/rentals/renter/${renterName}`),
-
-    // 특정 디바이스의 대여 기록
-    getRentalsByDevice: (deviceId) => adminApi.get(`/rentals/device/${deviceId}`),
 
     // 대여 기록 삭제 (관리자용)
     deleteRental: (id) => adminApi.delete(`/rentals/${id}`),

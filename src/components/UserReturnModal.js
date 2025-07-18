@@ -26,6 +26,7 @@ function UserReturnModal({
         }
 
         try {
+            // ✅ 이름만 전달 (QA 비밀번호 제거)
             await onReturn(device.id, renterName.trim());
             // 성공 시 폼 초기화
             setRenterName('');
@@ -141,7 +142,7 @@ function UserReturnModal({
                         </button>
                         <button
                             type="submit"
-                            disabled={isLoading}
+                            disabled={isLoading || !renterName.trim()}
                             className="flex-1 px-4 py-3 bg-blue-600 dark:bg-blue-700 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 touch-manipulation text-base"
                         >
                             {isLoading ? '반납 처리 중...' : '반납 완료'}

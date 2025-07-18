@@ -80,7 +80,7 @@ function UserApp() {
         }
     };
 
-    // 반납 처리
+    // ✅ 반납 처리 (이름만 입력)
     const handleReturn = async (deviceId, renterName) => {
         setIsReturning(true);
         try {
@@ -102,7 +102,7 @@ function UserApp() {
     };
 
     if (loading) {
-        return <LoadingSpinner message="디바이스 목록을 불러오는 중..."/>;
+        return <LoadingSpinner message="디바이스 목록을 불러오는 중..." />;
     }
 
     const availableDevices = devices.filter(d => d.status === 'available');
@@ -139,12 +139,10 @@ function UserApp() {
 
                     {/* 디바이스 현황 표시 */}
                     <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-300">
-                        <span
-                            className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded-full">
+                        <span className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded-full">
                             ✅ 대여 가능: {availableDevices.length}개
                         </span>
-                        <span
-                            className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 px-2 py-1 rounded-full">
+                        <span className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 px-2 py-1 rounded-full">
                             🔴 대여 중: {rentedDevices.length}개
                         </span>
                         <span>
@@ -193,7 +191,7 @@ function UserApp() {
                                                 isAvailable ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600' : ''
                                     }`}
                                     onClick={() => isAvailable && handleDeviceSelect(device.id)}
-                                    style={{minHeight: '60px'}}
+                                    style={{ minHeight: '60px' }}
                                 >
                                     <td className="px-6 py-5">
                                         <div className="flex items-center justify-center w-8 h-8">
@@ -224,8 +222,7 @@ function UserApp() {
                                                 {device.modelName}
                                             </div>
                                             {device.isRootedOrJailbroken && (
-                                                <span
-                                                    className="inline-block bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 text-sm px-3 py-1 rounded mt-2">
+                                                <span className="inline-block bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 text-sm px-3 py-1 rounded mt-2">
                                                     ⚠️ {device.platform === 'iOS' ? '탈옥' : '루팅'}
                                                 </span>
                                             )}
@@ -292,7 +289,7 @@ function UserApp() {
                     onRent={handleRent}
                 />
 
-                {/* 반납 모달 */}
+                {/* ✅ 반납 모달 (간단해진 버전) */}
                 <UserReturnModal
                     isOpen={showReturnModal}
                     onClose={() => setShowReturnModal(false)}
@@ -301,13 +298,14 @@ function UserApp() {
                     isLoading={isReturning}
                 />
 
-                {/* 이력 보기 모달 */}
+                {/* ✅ 이력 보기 모달 (공개 API 사용) */}
                 <RentalHistoryModal
                     isOpen={showHistoryModal}
                     onClose={() => setShowHistoryModal(false)}
                 />
             </main>
         </div>
-    )
+    );
 }
-    export default UserApp;
+
+export default UserApp;
