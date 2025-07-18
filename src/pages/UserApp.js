@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { deviceAPI } from '../services/api';
+import { deviceAPI } from '../services/api';  // ✅ 수정된 API 사용
 import Header from '../components/Header';
 import RentModal from '../components/RentModal';
 import UserReturnModal from '../components/UserReturnModal';
@@ -17,7 +17,7 @@ function UserApp() {
     const [selectedReturnDevice, setSelectedReturnDevice] = useState(null);
     const [isReturning, setIsReturning] = useState(false);
 
-    // 항상 모든 디바이스 조회 (대여 가능 + 대여중)
+    // ✅ 모든 디바이스 조회 (대여 가능 + 대여 중)
     useEffect(() => {
         fetchAllDevices();
     }, []);
@@ -25,6 +25,7 @@ function UserApp() {
     const fetchAllDevices = async () => {
         try {
             setRefreshing(true);
+            // ✅ 새 API 사용: 모든 디바이스 조회 (사용자용, 인증 불필요)
             const response = await deviceAPI.getAllDevices();
             setDevices(response.data);
         } catch (error) {
@@ -101,7 +102,7 @@ function UserApp() {
     };
 
     if (loading) {
-        return <LoadingSpinner message="디바이스 목록을 불러오는 중..." />;
+        return <LoadingSpinner message="디바이스 목록을 불러오는 중..."/>;
     }
 
     const availableDevices = devices.filter(d => d.status === 'available');
@@ -138,10 +139,12 @@ function UserApp() {
 
                     {/* 디바이스 현황 표시 */}
                     <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-300">
-                        <span className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded-full">
+                        <span
+                            className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded-full">
                             ✅ 대여 가능: {availableDevices.length}개
                         </span>
-                        <span className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 px-2 py-1 rounded-full">
+                        <span
+                            className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 px-2 py-1 rounded-full">
                             🔴 대여 중: {rentedDevices.length}개
                         </span>
                         <span>
@@ -190,7 +193,7 @@ function UserApp() {
                                                 isAvailable ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600' : ''
                                     }`}
                                     onClick={() => isAvailable && handleDeviceSelect(device.id)}
-                                    style={{ minHeight: '60px' }}
+                                    style={{minHeight: '60px'}}
                                 >
                                     <td className="px-6 py-5">
                                         <div className="flex items-center justify-center w-8 h-8">
@@ -221,7 +224,8 @@ function UserApp() {
                                                 {device.modelName}
                                             </div>
                                             {device.isRootedOrJailbroken && (
-                                                <span className="inline-block bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 text-sm px-3 py-1 rounded mt-2">
+                                                <span
+                                                    className="inline-block bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 text-sm px-3 py-1 rounded mt-2">
                                                     ⚠️ {device.platform === 'iOS' ? '탈옥' : '루팅'}
                                                 </span>
                                             )}
@@ -304,7 +308,6 @@ function UserApp() {
                 />
             </main>
         </div>
-    );
+    )
 }
-
-export default UserApp;
+    export default UserApp;
