@@ -101,6 +101,21 @@ export const rentalAPI = {
     getRentalsByDevice: (deviceId) => api.get(`/rentals/device/${deviceId}`),
 };
 
+// 🆕 시스템 관리 API (사용자도 상태는 조회 가능)
+export const systemAPI = {
+    // 🔓 공개 API - 시스템 상태 조회 (사용자용)
+    getSystemStatus: () => api.get('/system/status'),
+
+    // 🔒 관리자용 - 전체 시스템 설정 조회 (관리자 앱에서만 사용)
+    getSystemConfig: () => adminApi.get('/system/config'),
+
+    // 🔒 관리자용 - 시스템 설정 업데이트 (관리자 앱에서만 사용)
+    updateSystemConfig: (configData) => adminApi.put('/system/config', configData),
+
+    // 🔒 관리자용 - 테스트 모드 빠른 토글 (관리자 앱에서만 사용)
+    toggleTestMode: () => adminApi.put('/system/test-mode/toggle'),
+};
+
 // 🔒 관리자용 API (JWT 토큰 필요)
 export const adminAPI = {
     // 모든 디바이스 조회 (관리자용 - 상세 정보 포함)

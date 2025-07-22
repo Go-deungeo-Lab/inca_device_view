@@ -9,7 +9,8 @@ function Header({
                     onRefresh,
                     onRentClick,
                     onHistoryClick,
-                    isRefreshing = false
+                    isRefreshing = false,
+                    canRent = true // 🆕 대여 가능 여부 (테스트 모드 확인용)
                 }) {
     const { isDarkMode, toggleDarkMode } = useDarkMode();
 
@@ -55,16 +56,20 @@ function Header({
 
                         <button
                             onClick={onRentClick}
-                            disabled={selectedCount === 0}
+                            disabled={!canRent} // 🆕 테스트 모드나 선택되지 않았을 때 비활성화
                             className={`flex items-center px-6 py-2 rounded-md font-semibold transition-colors touch-manipulation ${
-                                selectedCount > 0
+                                canRent
                                     ? 'bg-blue-600 dark:bg-blue-700 text-white hover:bg-blue-700 dark:hover:bg-blue-600'
                                     : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                             }`}
                         >
                             📋 대여하기
                             {selectedCount > 0 && (
-                                <span className="ml-2 bg-blue-500 dark:bg-blue-600 text-white rounded-full px-2 py-1 text-xs">
+                                <span className={`ml-2 rounded-full px-2 py-1 text-xs ${
+                                    canRent
+                                        ? 'bg-blue-500 dark:bg-blue-600 text-white'
+                                        : 'bg-gray-400 dark:bg-gray-500 text-gray-300 dark:text-gray-400'
+                                }`}>
                                     {selectedCount}
                                 </span>
                             )}
