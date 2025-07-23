@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { rentalAPI } from '../services/api';
 import LoadingSpinner from './LoadingSpinner';
+import { formatKoreanDateTime, calculateDuration } from '../utils/timeUtils'; // 🆕 유틸리티 import
 
 function RentalHistoryModal({ isOpen, onClose }) {
     const [rentals, setRentals] = useState([]);
@@ -38,34 +39,6 @@ function RentalHistoryModal({ isOpen, onClose }) {
             alert('대여 이력을 불러오는데 실패했습니다.');
         } finally {
             setLoading(false);
-        }
-    };
-
-    const formatDate = (dateString) => {
-        if (!dateString) return '-';
-        const date = new Date(dateString);
-        return date.toLocaleString('ko-KR', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
-
-    const calculateDuration = (rentedAt, returnedAt) => {
-        if (!returnedAt) return '대여 중';
-
-        const start = new Date(rentedAt);
-        const end = new Date(returnedAt);
-        const diffMs = end - start;
-        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-        const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-
-        if (diffDays > 0) {
-            return `${diffDays}일 ${diffHours}시간`;
-        } else {
-            return `${diffHours}시간`;
         }
     };
 
@@ -214,15 +187,15 @@ function RentalHistoryModal({ isOpen, onClose }) {
                                     </td>
 
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {formatDate(rental.rentedAt)}
+                                        {formatKoreanDateTime(rental.rentedAt)} {/* 🆕 한국 시간으로 변환 */}
                                     </td>
 
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {formatDate(rental.returnedAt)}
+                                        {formatKoreanDateTime(rental.returnedAt)} {/* 🆕 한국 시간으로 변환 */}
                                     </td>
 
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {calculateDuration(rental.rentedAt, rental.returnedAt)}
+                                        {calculateDuration(rental.rentedAt, rental.returnedAt)} {/* 🆕 유틸리티 사용 */}
                                     </td>
 
                                     <td className="px-6 py-4 whitespace-nowrap">

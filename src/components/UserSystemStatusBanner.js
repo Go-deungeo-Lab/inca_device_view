@@ -2,21 +2,10 @@
 
 import React from 'react';
 import { useSystemStatus } from '../contexts/SystemStatusContext';
+import { formatKoreanDateTime } from '../utils/timeUtils'; // 🆕 유틸리티 import
 
 function UserSystemStatusBanner() {
     const { systemStatus, loading } = useSystemStatus();
-
-    const formatDate = (dateString) => {
-        if (!dateString) return null;
-        const date = new Date(dateString);
-        return date.toLocaleString('ko-KR', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
 
     if (loading) {
         return null; // 로딩 중일 때는 배너를 숨김
@@ -75,8 +64,8 @@ function UserSystemStatusBanner() {
                                 <div className="bg-red-100 dark:bg-red-900/40 rounded-md p-3 min-w-0 flex-shrink-0">
                                     <div className="font-medium text-red-800 dark:text-red-200 mb-1">테스트 기간</div>
                                     <div className="text-xs space-y-1">
-                                        <div>시작: {formatDate(systemStatus.testStartDate)}</div>
-                                        <div>종료: {formatDate(systemStatus.testEndDate)}</div>
+                                        <div>시작: {formatKoreanDateTime(systemStatus.testStartDate)}</div> {/* 🆕 한국 시간으로 변환 */}
+                                        <div>종료: {formatKoreanDateTime(systemStatus.testEndDate)}</div> {/* 🆕 한국 시간으로 변환 */}
                                     </div>
                                 </div>
                             )}
