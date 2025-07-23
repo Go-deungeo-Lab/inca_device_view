@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { deviceAPI, systemAPI } from '../services/api'; // 🆕 systemAPI 추가
+import { deviceAPI } from '../services/api';
+import { useSystemStatus } from '../contexts/SystemStatusContext'; // 🆕 Context 사용
 import Header from '../components/Header';
 import RentModal from '../components/RentModal';
 import UserReturnModal from '../components/UserReturnModal';
 import RentalHistoryModal from '../components/RentalHistoryModal';
-import UserSystemStatusBanner from '../components/UserSystemStatusBanner'; // 🆕 추가
+import UserSystemStatusBanner from '../components/UserSystemStatusBanner';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 function UserApp() {
     const [devices, setDevices] = useState([]);
     const [selectedDevices, setSelectedDevices] = useState([]);
-    const [systemStatus, setSystemStatus] = useState(null); // 🆕 시스템 상태
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [showRentModal, setShowRentModal] = useState(false);
@@ -19,70 +19,12 @@ function UserApp() {
     const [selectedReturnDevice, setSelectedReturnDevice] = useState(null);
     const [isReturning, setIsReturning] = useState(false);
 
+    // 🆕 Context에서 시스템 상태 가져오기
+    const { systemStatus, isTestMode, refreshSystemStatus } = useSystemStatus();
+
     useEffect(() => {
-        Promise.all([
-            fetchAllDevices(),
-            fetchSystemStatus() // 🆕 시스템 상태도 함께 조회
-        ]);
-
-        // 🆕 실시간 시스템 상태 확인 (2초마다)
-        const systemStatusInterval = setInterval(fetchSystemStatus, 2000);
-
-        // 🆕 페이지 포커스 시 상태 확인
-        const handleFocus = () => {
-            fetchSystemStatus();
-        };
-
-        // 🆕 페이지 가시성 변경 시 상태 확인
-        const handleVisibilityChange = () => {
-            if (!document.hidden) {
-                fetchSystemStatus();
-            }
-        };
-
-        window.addEventListener('focus', handleFocus);
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-
-        return () => {
-            clearInterval(systemStatusInterval);
-            window.removeEventListener('focus', handleFocus);
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
-        };
+        fetchAllDevices();
     }, []);
-
-    // 🆕 시스템 상태 조회
-    const fetchSystemStatus = async () => {
-        try {
-            const response = await systemAPI.getSystemStatus();
-            const newStatus = response.data;
-
-            // 🆕 시스템 상태 변경 감지 및 알림
-            if (systemStatus !== null) {
-                // 테스트 모드가 새로 활성화된 경우
-                if (!systemStatus.isTestMode && newStatus.isTestMode) {
-                    const message = newStatus.testMessage
-                        ? `⚠️ 시스템 테스트가 시작되었습니다!\n\n${newStatus.testMessage}`
-                        : '⚠️ 시스템 테스트가 시작되어 디바이스 대여가 제한됩니다.';
-
-                    // 잠깐 기다렸다가 알림 (상태 업데이트 후)
-                    setTimeout(() => {
-                        alert(message);
-                    }, 100);
-                }
-
-                // 테스트 모드가 해제된 경우
-                if (systemStatus.isTestMode && !newStatus.isTestMode) {
-                    setTimeout(() => {
-                        alert('✅ 시스템 테스트가 완료되었습니다!\n정상적으로 디바이스를 대여할 수 있습니다.');
-                    }, 100);
-                }
-            }
-
-            setSystemStatus(newStatus);
-        } catch (error) {
-            console.error('시스템 상태 조회 실패:', error);
-        }
-    };
 
     const fetchAllDevices = async () => {
         try {
@@ -102,7 +44,7 @@ function UserApp() {
     const handleRefreshAll = async () => {
         await Promise.all([
             fetchAllDevices(),
-            fetchSystemStatus()
+            refreshSystemStatus() // Context의 새로고침 함수 사용
         ]);
     };
 
@@ -133,10 +75,10 @@ function UserApp() {
     // 🆕 대여 버튼 클릭 시 테스트 모드 확인
     const handleRentClick = () => {
         // 테스트 모드 확인
-        if (systemStatus?.isTestMode) {
+        if (isTestMode) {
             let message = '';
 
-            if (systemStatus.testMessage) {
+            if (systemStatus?.testMessage) {
                 // 관리자가 설정한 메시지가 있으면 우선 표시
                 message = `${systemStatus.testType ? `[${systemStatus.testType}]` : '[시스템 테스트]'}\n\n${systemStatus.testMessage}`;
             } else {
@@ -170,7 +112,7 @@ function UserApp() {
                 const errorMessage = error.response.data.message || '현재 시스템 테스트 기간으로 대여가 제한됩니다.';
                 alert(errorMessage);
                 // 시스템 상태 다시 확인
-                await fetchSystemStatus();
+                refreshSystemStatus();
             } else {
                 const errorMessage = error.response?.data?.message || '디바이스 대여에 실패했습니다.';
                 alert(errorMessage);
@@ -208,18 +150,17 @@ function UserApp() {
     const rentedDevices = devices.filter(d => d.status === 'rented');
 
     // 🆕 테스트 모드일 때 대여 버튼 비활성화
-    const canRent = !systemStatus?.isTestMode && selectedDevices.length > 0;
+    const canRent = !isTestMode && selectedDevices.length > 0;
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
             <Header
                 deviceCount={availableDevices.length}
                 selectedCount={selectedDevices.length}
-                onRefresh={handleRefreshAll} // 🆕 시스템 상태도 함께 새로고침
-                onRentClick={handleRentClick} // 🆕 테스트 모드 확인하는 핸들러
+                onRefresh={handleRefreshAll}
+                onRentClick={handleRentClick}
                 onHistoryClick={() => setShowHistoryModal(true)}
                 isRefreshing={refreshing}
-                // 🆕 테스트 모드일 때 버튼 비활성화
                 canRent={canRent}
             />
 
@@ -232,9 +173,9 @@ function UserApp() {
                     <div className="flex items-center space-x-4">
                         <button
                             onClick={handleSelectAll}
-                            disabled={systemStatus?.isTestMode} // 🆕 테스트 모드일 때 비활성화
+                            disabled={isTestMode}
                             className={`text-sm font-medium transition-colors ${
-                                systemStatus?.isTestMode
+                                isTestMode
                                     ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
                                     : 'text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300'
                             }`}
@@ -249,7 +190,7 @@ function UserApp() {
                         )}
 
                         {/* 🆕 테스트 모드 안내 */}
-                        {systemStatus?.isTestMode && (
+                        {isTestMode && (
                             <span className="text-sm text-red-600 dark:text-red-400 font-medium">
                                 ⚠️ 대여 제한 중
                             </span>
@@ -283,7 +224,7 @@ function UserApp() {
                                     type="checkbox"
                                     checked={availableDevices.length > 0 && selectedDevices.length === availableDevices.length}
                                     onChange={handleSelectAll}
-                                    disabled={systemStatus?.isTestMode} // 🆕 테스트 모드일 때 비활성화
+                                    disabled={isTestMode}
                                     className="w-6 h-6 text-blue-600 dark:text-blue-500 rounded focus:ring-blue-500 cursor-pointer bg-white dark:bg-gray-600 border-gray-300 dark:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                             </th>
@@ -301,7 +242,6 @@ function UserApp() {
                             const isSelected = selectedDevices.includes(device.id);
                             const isRented = device.status === 'rented';
                             const isAvailable = device.status === 'available';
-                            const isTestMode = systemStatus?.isTestMode;
 
                             return (
                                 <tr
@@ -312,7 +252,7 @@ function UserApp() {
                                                 isAvailable && !isTestMode ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600' :
                                                     isTestMode ? 'opacity-75' : ''
                                     }`}
-                                    onClick={() => isAvailable && !isTestMode && handleDeviceSelect(device.id)} // 🆕 테스트 모드일 때 클릭 차단
+                                    onClick={() => isAvailable && !isTestMode && handleDeviceSelect(device.id)}
                                     style={{ minHeight: '60px' }}
                                 >
                                     <td className="px-6 py-5">
@@ -322,7 +262,7 @@ function UserApp() {
                                                     type="checkbox"
                                                     checked={isSelected}
                                                     onChange={() => handleDeviceSelect(device.id)}
-                                                    disabled={isTestMode} // 🆕 테스트 모드일 때 비활성화
+                                                    disabled={isTestMode}
                                                     className="w-6 h-6 text-blue-600 dark:text-blue-500 rounded focus:ring-blue-500 cursor-pointer touch-manipulation bg-white dark:bg-gray-600 border-gray-300 dark:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
                                                     onClick={(e) => e.stopPropagation()}
                                                 />

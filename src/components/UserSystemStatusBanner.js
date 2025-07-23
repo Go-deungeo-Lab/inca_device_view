@@ -1,31 +1,10 @@
 // src/components/UserSystemStatusBanner.js
 
-import React, { useState, useEffect } from 'react';
-import { systemAPI } from '../services/api';
+import React from 'react';
+import { useSystemStatus } from '../contexts/SystemStatusContext';
 
 function UserSystemStatusBanner() {
-    const [systemStatus, setSystemStatus] = useState(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        fetchSystemStatus();
-
-        // 🆕 실시간 상태 확인 (2초마다)
-        const interval = setInterval(fetchSystemStatus, 2000);
-
-        return () => clearInterval(interval);
-    }, []);
-
-    const fetchSystemStatus = async () => {
-        try {
-            const response = await systemAPI.getSystemStatus();
-            setSystemStatus(response.data);
-        } catch (error) {
-            console.error('시스템 상태 조회 실패:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const { systemStatus, loading } = useSystemStatus();
 
     const formatDate = (dateString) => {
         if (!dateString) return null;
