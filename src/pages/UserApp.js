@@ -3,7 +3,7 @@ import { deviceAPI } from '../services/api';
 import { useSystemStatus } from '../contexts/SystemStatusContext';
 import Header from '../components/Header';
 import RentModal from '../components/RentModal';
-import UserReturnModal from '../components/UserReturnModal'; // 🆕 스마트 반납 모달
+import UserReturnModal from '../components/UserReturnModal';
 import RentalHistoryModal from '../components/RentalHistoryModal';
 import UserSystemStatusBanner from '../components/UserSystemStatusBanner';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -18,6 +18,11 @@ function UserApp() {
     const [showHistoryModal, setShowHistoryModal] = useState(false);
     const [selectedReturnDevice, setSelectedReturnDevice] = useState(null);
     const [isReturning, setIsReturning] = useState(false);
+
+    // 🆕 상태와 플랫폼 정렬 추가
+    const [statusSortOrder, setStatusSortOrder] = useState('desc'); // desc: 대여중이 위로
+    const [platformSortOrder, setPlatformSortOrder] = useState('asc'); // asc: Android가 먼저
+    const [activeSortColumn, setActiveSortColumn] = useState('status'); // 현재 활성 정렬 컬럼
 
     // Context에서 시스템 상태 가져오기
     const { systemStatus, isTestMode, refreshSystemStatus } = useSystemStatus();
@@ -38,6 +43,62 @@ function UserApp() {
             setLoading(false);
             setRefreshing(false);
         }
+    };
+
+    // 🆕 상태 정렬 토글
+    const handleStatusSort = () => {
+        setStatusSortOrder(statusSortOrder === 'asc' ? 'desc' : 'asc');
+        setActiveSortColumn('status');
+    };
+
+    // 🆕 플랫폼 정렬 토글
+    const handlePlatformSort = () => {
+        setPlatformSortOrder(platformSortOrder === 'asc' ? 'desc' : 'asc');
+        setActiveSortColumn('platform');
+    };
+
+    // 🆕 정렬된 디바이스 목록
+    const sortedDevices = [...devices].sort((a, b) => {
+        if (activeSortColumn === 'status') {
+            // 상태 정렬: rented(1) > available(0)
+            const aValue = a.status === 'rented' ? 1 : 0;
+            const bValue = b.status === 'rented' ? 1 : 0;
+
+            if (aValue !== bValue) {
+                return statusSortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+            }
+        } else if (activeSortColumn === 'platform') {
+            // 플랫폼 정렬: Android < iOS 알파벳 순
+            const aValue = a.platform;
+            const bValue = b.platform;
+
+            if (aValue !== bValue) {
+                if (platformSortOrder === 'asc') {
+                    return aValue.localeCompare(bValue);
+                } else {
+                    return bValue.localeCompare(aValue);
+                }
+            }
+        }
+
+        // 기본 2차 정렬: 디바이스 번호 순서
+        const aNum = parseInt(a.deviceNumber) || 0;
+        const bNum = parseInt(b.deviceNumber) || 0;
+        return aNum - bNum;
+    });
+
+    // 🆕 정렬 아이콘 (활성 컬럼만 표시)
+    const getSortIcon = (column) => {
+        if (activeSortColumn !== column) {
+            return <span className="text-gray-400 ml-1">↕️</span>;
+        }
+
+        const order = column === 'status' ? statusSortOrder : platformSortOrder;
+        return (
+            <span className="text-blue-600 ml-1">
+                {order === 'asc' ? '↑' : '↓'}
+            </span>
+        );
     };
 
     // 전체 새로고침 (시스템 상태 포함)
@@ -113,7 +174,7 @@ function UserApp() {
         }
     };
 
-    // 🆕 다중 반납 처리
+    // 다중 반납 처리
     const handleMultipleReturn = async (deviceIds, renterName) => {
         setIsReturning(true);
         try {
@@ -157,7 +218,7 @@ function UserApp() {
         }
     };
 
-    // 🆕 반납 모달 열기 (자동으로 해당 대여자의 모든 디바이스 표시)
+    // 반납 모달 열기 (자동으로 해당 대여자의 모든 디바이스 표시)
     const handleReturnClick = (device) => {
         setSelectedReturnDevice(device);
         setShowReturnModal(true);
@@ -238,7 +299,7 @@ function UserApp() {
                     <table className="min-w-full">
                         <thead className="bg-gray-50 dark:bg-gray-700">
                         <tr>
-                            <th className="px-6 py-4 text-left text-sm font-medium text-gray-700 dark:text-gray-300">
+                            <th className="px-6 py-4 text-center text-sm font-medium text-gray-700 dark:text-gray-300 w-16">
                                 <input
                                     type="checkbox"
                                     checked={availableDevices.length > 0 && selectedDevices.length === availableDevices.length}
@@ -247,17 +308,54 @@ function UserApp() {
                                     className="w-6 h-6 text-blue-600 dark:text-blue-500 rounded focus:ring-blue-500 cursor-pointer bg-white dark:bg-gray-600 border-gray-300 dark:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                             </th>
-                            <th className="px-6 py-4 text-left text-sm font-medium text-gray-700 dark:text-gray-300">No.</th>
-                            <th className="px-6 py-4 text-left text-sm font-medium text-gray-700 dark:text-gray-300">제품명</th>
-                            <th className="px-6 py-4 text-left text-sm font-medium text-gray-700 dark:text-gray-300">플랫폼</th>
-                            <th className="px-6 py-4 text-left text-sm font-medium text-gray-700 dark:text-gray-300">OS</th>
-                            <th className="px-6 py-4 text-left text-sm font-medium text-gray-700 dark:text-gray-300">상태</th>
-                            <th className="px-6 py-4 text-left text-sm font-medium text-gray-700 dark:text-gray-300">대여자</th>
-                            <th className="px-6 py-4 text-left text-sm font-medium text-gray-700 dark:text-gray-300">액션</th>
+
+                            <th className="px-6 py-4 text-center text-sm font-medium text-gray-700 dark:text-gray-300 w-20">
+                                No.
+                            </th>
+
+                            <th className="px-6 py-4 text-center text-sm font-medium text-gray-700 dark:text-gray-300 w-64">
+                                제품명
+                            </th>
+
+                            {/* 🆕 플랫폼 컬럼 정렬 추가 */}
+                            <th
+                                className="px-6 py-4 text-center text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none w-32"
+                                onClick={handlePlatformSort}
+                                title="클릭하여 정렬"
+                            >
+                                <div className="flex items-center justify-center">
+                                    플랫폼
+                                    {getSortIcon('platform')}
+                                </div>
+                            </th>
+
+                            <th className="px-6 py-4 text-center text-sm font-medium text-gray-700 dark:text-gray-300 w-24">
+                                OS
+                            </th>
+
+                            {/* 🆕 상태 컬럼 정렬 */}
+                            <th
+                                className="px-6 py-4 text-center text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none w-32"
+                                onClick={handleStatusSort}
+                                title="클릭하여 정렬"
+                            >
+                                <div className="flex items-center justify-center">
+                                    상태
+                                    {getSortIcon('status')}
+                                </div>
+                            </th>
+
+                            <th className="px-6 py-4 text-center text-sm font-medium text-gray-700 dark:text-gray-300 w-28">
+                                대여자
+                            </th>
+
+                            <th className="px-6 py-4 text-center text-sm font-medium text-gray-700 dark:text-gray-300 w-24">
+                                액션
+                            </th>
                         </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
-                        {devices.map((device) => {
+                        {sortedDevices.map((device) => {
                             const isSelected = selectedDevices.includes(device.id);
                             const isRented = device.status === 'rented';
                             const isAvailable = device.status === 'available';
@@ -274,28 +372,26 @@ function UserApp() {
                                     onClick={() => isAvailable && !isTestMode && handleDeviceSelect(device.id)}
                                     style={{ minHeight: '60px' }}
                                 >
-                                    <td className="px-6 py-5">
-                                        <div className="flex items-center justify-center w-8 h-8">
-                                            {isAvailable ? (
-                                                <input
-                                                    type="checkbox"
-                                                    checked={isSelected}
-                                                    onChange={() => handleDeviceSelect(device.id)}
-                                                    disabled={isTestMode}
-                                                    className="w-6 h-6 text-blue-600 dark:text-blue-500 rounded focus:ring-blue-500 cursor-pointer touch-manipulation bg-white dark:bg-gray-600 border-gray-300 dark:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                    onClick={(e) => e.stopPropagation()}
-                                                />
-                                            ) : (
-                                                <span className="text-gray-400 dark:text-gray-500">-</span>
-                                            )}
-                                        </div>
+                                    <td className="px-6 py-5 text-center">
+                                        {isAvailable ? (
+                                            <input
+                                                type="checkbox"
+                                                checked={isSelected}
+                                                onChange={() => handleDeviceSelect(device.id)}
+                                                disabled={isTestMode}
+                                                className="w-6 h-6 text-blue-600 dark:text-blue-500 rounded focus:ring-blue-500 cursor-pointer touch-manipulation bg-white dark:bg-gray-600 border-gray-300 dark:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
+                                        ) : (
+                                            <span className="text-gray-400 dark:text-gray-500">-</span>
+                                        )}
                                     </td>
 
-                                    <td className="px-6 py-5 text-base font-medium text-gray-900 dark:text-white">
+                                    <td className="px-6 py-5 text-center text-base font-bold text-gray-900 dark:text-white">
                                         {device.deviceNumber}
                                     </td>
 
-                                    <td className="px-6 py-5">
+                                    <td className="px-6 py-5 text-center">
                                         <div>
                                             <div className="text-base font-medium text-gray-900 dark:text-white">
                                                 {device.productName}
@@ -311,15 +407,15 @@ function UserApp() {
                                         </div>
                                     </td>
 
-                                    <td className="px-6 py-5 text-base text-gray-900 dark:text-white">
+                                    <td className="px-6 py-5 text-center text-base text-gray-900 dark:text-white">
                                         {device.platform === 'iOS' ? '🍎 iOS' : '🤖 Android'}
                                     </td>
 
-                                    <td className="px-6 py-5 text-base text-gray-900 dark:text-white">
+                                    <td className="px-6 py-5 text-center text-base text-gray-900 dark:text-white">
                                         {device.osVersion}
                                     </td>
 
-                                    <td className="px-6 py-5">
+                                    <td className="px-6 py-5 text-center">
                                         <span className={`inline-block px-3 py-2 text-sm rounded-full font-medium ${
                                             isRented
                                                 ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
@@ -329,18 +425,18 @@ function UserApp() {
                                         </span>
                                     </td>
 
-                                    <td className="px-6 py-5 text-base text-gray-900 dark:text-white">
+                                    <td className="px-6 py-5 text-center text-base text-gray-900 dark:text-white">
                                         {device.currentRenter || '-'}
                                     </td>
 
-                                    <td className="px-6 py-5">
+                                    <td className="px-6 py-5 text-center">
                                         {isRented ? (
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     handleReturnClick(device);
                                                 }}
-                                                className="px-3 py-2 bg-blue-600 dark:bg-blue-700 text-white text-sm rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors touch-manipulation"
+                                                className="px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white text-sm rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors touch-manipulation whitespace-nowrap"
                                             >
                                                 반납하기
                                             </button>
@@ -371,7 +467,7 @@ function UserApp() {
                     onRent={handleRent}
                 />
 
-                {/* 🆕 스마트 반납 모달 (자동으로 해당 대여자의 모든 디바이스 표시) */}
+                {/* 스마트 반납 모달 (자동으로 해당 대여자의 모든 디바이스 표시) */}
                 <UserReturnModal
                     isOpen={showReturnModal}
                     onClose={() => setShowReturnModal(false)}
