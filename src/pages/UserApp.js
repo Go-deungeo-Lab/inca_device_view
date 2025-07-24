@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { deviceAPI } from '../services/api';
-import { useSystemStatus } from '../contexts/SystemStatusContext'; // 🆕 Context 사용
+import { useSystemStatus } from '../contexts/SystemStatusContext';
 import Header from '../components/Header';
 import RentModal from '../components/RentModal';
-import UserReturnModal from '../components/UserReturnModal';
+import UserReturnModal from '../components/UserReturnModal'; // 🆕 스마트 반납 모달
 import RentalHistoryModal from '../components/RentalHistoryModal';
 import UserSystemStatusBanner from '../components/UserSystemStatusBanner';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -19,7 +19,7 @@ function UserApp() {
     const [selectedReturnDevice, setSelectedReturnDevice] = useState(null);
     const [isReturning, setIsReturning] = useState(false);
 
-    // 🆕 Context에서 시스템 상태 가져오기
+    // Context에서 시스템 상태 가져오기
     const { systemStatus, isTestMode, refreshSystemStatus } = useSystemStatus();
 
     useEffect(() => {
@@ -40,11 +40,11 @@ function UserApp() {
         }
     };
 
-    // 🆕 전체 새로고침 (시스템 상태 포함)
+    // 전체 새로고침 (시스템 상태 포함)
     const handleRefreshAll = async () => {
         await Promise.all([
             fetchAllDevices(),
-            refreshSystemStatus() // Context의 새로고침 함수 사용
+            refreshSystemStatus()
         ]);
     };
 
@@ -72,24 +72,18 @@ function UserApp() {
         }
     };
 
-    // 🆕 대여 버튼 클릭 시 테스트 모드 확인
+    // 대여 버튼 클릭 시 테스트 모드 확인
     const handleRentClick = () => {
-        // 테스트 모드 확인
         if (isTestMode) {
             let message = '';
-
             if (systemStatus?.testMessage) {
-                // 관리자가 설정한 메시지가 있으면 우선 표시
                 message = `${systemStatus.testType ? `[${systemStatus.testType}]` : '[시스템 테스트]'}\n\n${systemStatus.testMessage}`;
             } else {
-                // 기본 메시지
                 message = '현재 시스템 테스트 기간으로 디바이스 대여가 제한됩니다. 관리자에게 문의해주세요.';
             }
-
             alert(message);
             return;
         }
-
         setShowRentModal(true);
     };
 
@@ -103,15 +97,13 @@ function UserApp() {
 
             alert(`${deviceIds.length}개 디바이스가 성공적으로 대여되었습니다!`);
             setSelectedDevices([]);
-            await fetchAllDevices(); // 목록 새로고침
+            await fetchAllDevices();
         } catch (error) {
             console.error('대여 실패:', error);
 
-            // 🆕 서버에서 503 에러(테스트 모드)가 오면 특별 처리
             if (error.response?.status === 503) {
                 const errorMessage = error.response.data.message || '현재 시스템 테스트 기간으로 대여가 제한됩니다.';
                 alert(errorMessage);
-                // 시스템 상태 다시 확인
                 refreshSystemStatus();
             } else {
                 const errorMessage = error.response?.data?.message || '디바이스 대여에 실패했습니다.';
@@ -121,22 +113,51 @@ function UserApp() {
         }
     };
 
-    // 반납 처리
-    const handleReturn = async (deviceId, renterName) => {
+    // 🆕 다중 반납 처리
+    const handleMultipleReturn = async (deviceIds, renterName) => {
         setIsReturning(true);
         try {
-            await deviceAPI.userReturnDevice(deviceId, renterName);
-            alert('디바이스가 성공적으로 반납되었습니다!');
-            await fetchAllDevices(); // 목록 새로고침
+            const result = await deviceAPI.userReturnMultipleDevices(deviceIds, renterName);
+
+            // 결과 처리
+            if (result.data.summary.successCount > 0) {
+                alert(`✅ ${result.data.summary.successCount}개 디바이스가 성공적으로 반납되었습니다!`);
+            }
+
+            if (result.data.summary.failedCount > 0) {
+                const failedMessages = result.data.failed.map(f =>
+                    `• ${f.deviceNumber}: ${f.reason}`
+                ).join('\n');
+                alert(`⚠️ 일부 디바이스 반납에 실패했습니다:\n\n${failedMessages}`);
+            }
+
+            await fetchAllDevices();
         } catch (error) {
-            console.error('반납 실패:', error);
-            throw error; // 모달에서 에러 처리
+            console.error('다중 반납 실패:', error);
+            const errorMessage = error.response?.data?.message || '디바이스 일괄 반납에 실패했습니다.';
+            alert(`❌ ${errorMessage}`);
+            throw error;
         } finally {
             setIsReturning(false);
         }
     };
 
-    // 반납 모달 열기
+    // 단일 반납 처리
+    const handleReturn = async (deviceId, renterName) => {
+        setIsReturning(true);
+        try {
+            await deviceAPI.userReturnDevice(deviceId, renterName);
+            alert('디바이스가 성공적으로 반납되었습니다!');
+            await fetchAllDevices();
+        } catch (error) {
+            console.error('반납 실패:', error);
+            throw error;
+        } finally {
+            setIsReturning(false);
+        }
+    };
+
+    // 🆕 반납 모달 열기 (자동으로 해당 대여자의 모든 디바이스 표시)
     const handleReturnClick = (device) => {
         setSelectedReturnDevice(device);
         setShowReturnModal(true);
@@ -148,8 +169,6 @@ function UserApp() {
 
     const availableDevices = devices.filter(d => d.status === 'available');
     const rentedDevices = devices.filter(d => d.status === 'rented');
-
-    // 🆕 테스트 모드일 때 대여 버튼 비활성화
     const canRent = !isTestMode && selectedDevices.length > 0;
 
     return (
@@ -165,7 +184,7 @@ function UserApp() {
             />
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* 🆕 시스템 상태 배너 (테스트 모드일 때만 표시) */}
+                {/* 시스템 상태 배너 (테스트 모드일 때만 표시) */}
                 <UserSystemStatusBanner />
 
                 {/* 상태 및 선택 정보 */}
@@ -189,7 +208,7 @@ function UserApp() {
                             </span>
                         )}
 
-                        {/* 🆕 테스트 모드 안내 */}
+                        {/* 테스트 모드 안내 */}
                         {isTestMode && (
                             <span className="text-sm text-red-600 dark:text-red-400 font-medium">
                                 ⚠️ 대여 제한 중
@@ -352,16 +371,17 @@ function UserApp() {
                     onRent={handleRent}
                 />
 
-                {/* 반납 모달 (간단해진 버전) */}
+                {/* 🆕 스마트 반납 모달 (자동으로 해당 대여자의 모든 디바이스 표시) */}
                 <UserReturnModal
                     isOpen={showReturnModal}
                     onClose={() => setShowReturnModal(false)}
                     device={selectedReturnDevice}
-                    onReturn={handleReturn}
+                    onReturn={handleReturn} // 단일 반납용
+                    onMultipleReturn={handleMultipleReturn} // 다중 반납용
                     isLoading={isReturning}
                 />
 
-                {/* 이력 보기 모달 (공개 API 사용) */}
+                {/* 이력 보기 모달 */}
                 <RentalHistoryModal
                     isOpen={showHistoryModal}
                     onClose={() => setShowHistoryModal(false)}

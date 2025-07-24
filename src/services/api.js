@@ -75,6 +75,10 @@ export const userAPI = {
     // 사용자별 대여중인 디바이스 조회
     getUserRentedDevices: (renterName) =>
         api.get(`/devices/user/${renterName}/rented`),
+
+    // 🆕 사용자용 다중 디바이스 일괄 반납
+    userReturnMultipleDevices: (deviceIds, renterName) =>
+        api.post('/devices/user-return-multiple', { deviceIds, renterName }),
 };
 
 // 🔓 대여 이력 API (공개 - 사용자도 조회 가능)
@@ -161,6 +165,8 @@ export const deviceAPI = {
     rentDevices: userAPI.rentDevices,
     userReturnDevice: userAPI.userReturnDevice,
     getUserRentedDevices: userAPI.getUserRentedDevices,
+    userReturnMultipleDevices: userAPI.userReturnMultipleDevices, // 🆕 다중 반납 추가
+
 
     // 관리자 전용 API들 (하위 호환성)
     createDevice: adminAPI.createDevice,
