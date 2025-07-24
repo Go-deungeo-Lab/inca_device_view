@@ -350,7 +350,7 @@ function UserApp() {
                             </th>
 
                             <th className="px-6 py-4 text-center text-sm font-medium text-gray-700 dark:text-gray-300 w-24">
-                                액션
+                                반납
                             </th>
                         </tr>
                         </thead>
